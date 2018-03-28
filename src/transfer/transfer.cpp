@@ -344,3 +344,4 @@ void Transfer::finish(TransferModel::State state)
     mSocket->abort();
     mFile.close();
 }
+
