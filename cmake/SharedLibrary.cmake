@@ -1,6 +1,6 @@
 # The MIT License (MIT)
 #
-# Copyright (c) 2017 Nathan Osman
+# Copyright (c) 2018 Nathan Osman
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,11 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Copy the runtime files for the src shared library to the dest target.
+# Copy the runtime files for the src shared library to the dest target and
+# ensure that it is installed
 function(copy_lib_win src dest)
     add_custom_command(TARGET ${dest} POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E
-            copy_if_different \"$<TARGET_FILE:${src}>\" \"$<TARGET_FILE_DIR:${dest}>\"
+            copy_if_different \"$<TARGET_FILE:${src}>\" \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\"
         COMMENT "Copying ${src} to ${dest}..."
     )
 endfunction()

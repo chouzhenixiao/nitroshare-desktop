@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017 Nathan Osman
+ * Copyright (c) 2018 Nathan Osman
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,8 +25,7 @@
 #ifndef NS_CONTEXTMENU_H
 #define NS_CONTEXTMENU_H
 
-#include <string>
-#include <vector>
+#include <QStringList>
 
 #include <ShObjIdl.h>
 
@@ -53,9 +52,7 @@ private:
 
     ULONG mRefCount;
 
-    int mPort;
-    std::string mToken;
-    std::vector<std::wstring> mFilenames;
+    QStringList mFilenames;
 };
 
 #endif // NS_CONTEXTMENU_H

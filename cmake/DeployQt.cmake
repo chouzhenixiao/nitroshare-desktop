@@ -1,6 +1,6 @@
 # The MIT License (MIT)
 #
-# Copyright (c) 2016 Nathan Osman
+# Copyright (c) 2018 Nathan Osman
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,23 +28,27 @@ get_target_property(_qmake_executable Qt5::qmake IMPORTED_LOCATION)
 get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
 
 find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
-if(WINDEPLOYQT_EXECUTABLE)
-    message(STATUS "Found ${WINDEPLOYQT_EXECUTABLE}")
+if(WIN32 AND NOT WINDEPLOYQT_EXECUTABLE)
+    message(FATAL_ERROR "windeployqt not found")
 endif()
 
 find_program(MACDEPLOYQT_EXECUTABLE macdeployqt HINTS "${_qt_bin_dir}")
-if(MACDEPLOYQT_EXECUTABLE)
-    message(STATUS "Found ${MACDEPLOYQT_EXECUTABLE}")
+if(APPLE AND NOT MACDEPLOYQT_EXECUTABLE)
+    message(FATAL_ERROR "macdeployqt not found")
 endif()
 
 # Add commands that copy the required Qt files to the same directory as the
-# target after being built, including the system libraries
+# target after being built as well as including them in final installation
 function(windeployqt target)
+
+    # Run windeployqt immediately after build
     add_custom_command(TARGET ${target} POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E
             env PATH="${_qt_bin_dir}" "${WINDEPLOYQT_EXECUTABLE}"
                 --verbose 0
                 --no-compiler-runtime
+                --no-angle
+                --no-opengl-sw
                 \"$<TARGET_FILE:${target}>\"
         COMMENT "Deploying Qt..."
     )

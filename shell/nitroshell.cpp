@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017 Nathan Osman
+ * Copyright (c) 2018 Nathan Osman
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,20 +27,45 @@
 #include <Shlobj.h>
 #include <windows.h>
 
+#include <QCoreApplication>
+
 #include "classfactory.h"
 #include "nitroshell.h"
 #include "registry.h"
 
 // {52A10783-C811-4C45-9A3D-221A962C8640}
-static const GUID CLSID_NitroShellExt = { 0x52a10783, 0xc811, 0x4c45, { 0x9a, 0x3d, 0x22, 0x1a, 0x96, 0x2c, 0x86, 0x40 } };
+const GUID CLSID_NitroShellExt = { 0x52a10783, 0xc811, 0x4c45, { 0x9a, 0x3d, 0x22, 0x1a, 0x96, 0x2c, 0x86, 0x40 } };
 
-HINSTANCE gInstance;
+static HINSTANCE gInstance;
 UINT gLockCount = 0;
+
+static int gArgc = 1;
+static char **gArgv;
+static QCoreApplication *gApplication = nullptr;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    if (fdwReason == DLL_PROCESS_ATTACH) {
+    Q_UNUSED(lpvReserved);
+
+    switch (fdwReason) {
+    case DLL_PROCESS_ATTACH:
+    {
         gInstance = hinstDLL;
+
+        // Retrieve the filename of the executable for argv
+        char szFilename[MAX_PATH];
+        GetModuleFileNameA(NULL, szFilename, MAX_PATH);
+
+        // Initialize the application
+        gArgv = new char*[static_cast<unsigned int>(gArgc)] { szFilename };
+        gApplication = new QCoreApplication(gArgc, gArgv);
+
+        break;
+    }
+    case DLL_PROCESS_DETACH:
+        delete gApplication;
+        delete [] gArgv;
+        break;
     }
 
     return TRUE;
@@ -110,6 +135,14 @@ STDAPI DllRegisterServer()
 
     if (setValue(
             HKEY_LOCAL_MACHINE,
+            TEXT("Software\\Classes\\Folder\\ShellEx\\ContextMenuHandlers\\NitroShellExt"),
+            NULL,
+            TEXT("{52A10783-C811-4C45-9A3D-221A962C8640}")) != ERROR_SUCCESS) {
+        return SELFREG_E_CLASS;
+    }
+
+    if (setValue(
+            HKEY_LOCAL_MACHINE,
             TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Approved"),
             TEXT("{52A10783-C811-4C45-9A3D-221A962C8640}"),
             TEXT("NitroShare Context Menu")) != ERROR_SUCCESS) {
@@ -128,6 +161,10 @@ STDAPI DllUnregisterServer()
     }
 
     if (deleteKey(HKEY_LOCAL_MACHINE, TEXT("Software\\Classes\\*\\ShellEx\\ContextMenuHandlers\\NitroShellExt")) != ERROR_SUCCESS) {
+        return SELFREG_E_CLASS;
+    }
+
+    if (deleteKey(HKEY_LOCAL_MACHINE, TEXT("Software\\Classes\\Folder\\ShellEx\\ContextMenuHandlers\\NitroShellExt")) != ERROR_SUCCESS) {
         return SELFREG_E_CLASS;
     }
 
